@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  dhcp-server:
+    image: ubuntu
+    container_name: dhcp-server
+    command: /bin/bash -c "apt update && apt install -y isc-dhcp-server && cp /dhcpd.conf /etc/dhcp/dhcpd.conf && service isc-dhcp-server start && tail -f /dev/null"
+    networks:
+      - dhcp-network
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - ./dhcpd.conf:/dhcpd.conf
+
+  client1:
+    image: ubuntu
+    container_name: client1
+    command: /bin/bash -c "apt update && apt install -y isc-dhcp-client && dhclient -v && tail -f /dev/null"
+    networks:
+      - dhcp-network
+    restart: unless-stopped
+
+  client2:
+    image: ubuntu
+    container_name: client2
+    command: /bin/bash -c "apt update && apt install -y isc-dhcp-client && dhclient -v && tail -f /dev/null"
+    networks:
+      - dhcp-network
+    restart: unless-stopped
+
+networks:
+  dhcp-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.10.0/24
